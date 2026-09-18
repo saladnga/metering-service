@@ -47,7 +47,7 @@ def main():
         last_batch_payload = payload
     elapsed = time.time() - t0
 
-    print(f"\n--- Ingestion throughput ---")
+    print("\n--- Ingestion throughput ---")
     print(f"{len(on_time)} events sent in {elapsed:.1f}s -> {len(on_time) / elapsed:.0f} events/sec")
     print(f"accepted={total_accepted} duplicates={total_duplicates}")
 
