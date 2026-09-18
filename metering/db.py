@@ -1,5 +1,7 @@
 import os
+
 from psycopg_pool import ConnectionPool
+
 
 def get_pool():
     host = os.environ.get("PGHOST", "localhost")

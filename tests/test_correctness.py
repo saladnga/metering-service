@@ -1,8 +1,9 @@
-import uuid
 import datetime
+import uuid
+
 from metering.db import pool
-from metering.ingest import insert_events
 from metering.generate import generate_events
+from metering.ingest import insert_events
 from metering.rollup import recompute_hour
 
 
@@ -13,10 +14,9 @@ def get_total_quantity(tenant):
         WHERE tenant = %s
     """
 
-    with pool.connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(sum_quantity, (tenant,))
-            total_quantity = cur.fetchone()
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(sum_quantity, (tenant,))
+        total_quantity = cur.fetchone()
 
     return total_quantity[0]
 
@@ -26,7 +26,7 @@ def test_ingest_is_idempotent_at_volume():
     start = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
     end = datetime.datetime(2026, 1, 2, tzinfo=datetime.timezone.utc)
 
-    on_time, late = generate_events(10000, start, end, tenant=tenant)
+    on_time, _late = generate_events(10000, start, end, tenant=tenant)
 
     insert_events(on_time)
     total1 = get_total_quantity(tenant)
@@ -47,10 +47,9 @@ def get_rollup_quantity(tenant, metric, bucket_start, revision):
         WHERE tenant = %s AND metric = %s AND bucket_start = %s AND revision = %s
     """
 
-    with pool.connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(rollup_quantity, (tenant, metric, bucket_start, revision))
-            rollup_quantity = cur.fetchone()
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(rollup_quantity, (tenant, metric, bucket_start, revision))
+        rollup_quantity = cur.fetchone()
 
     return rollup_quantity[0]
 

@@ -1,23 +1,23 @@
 import datetime
+
+from metering.db import pool
 from metering.generate import generate_events
 from metering.ingest import insert_events
 from metering.rollup import recompute_hour
-from metering.db import pool
 
 
 def get_total(tenant, metric, hour_start):
-    with pool.connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
                 SELECT quantity FROM hourly_rollups
                 WHERE tenant = %s AND metric = %s AND bucket_start = %s
                 ORDER BY revision DESC LIMIT 1
                 """,
-                (tenant, metric, hour_start),
-            )
-            row = cur.fetchone()
-            return row[0] if row else 0
+            (tenant, metric, hour_start),
+        )
+        row = cur.fetchone()
+        return row[0] if row else 0
 
 
 def main():

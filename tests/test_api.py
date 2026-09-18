@@ -1,7 +1,9 @@
 import datetime
-from fastapi.testclient import TestClient
-from metering.api import app
 import uuid
+
+from fastapi.testclient import TestClient
+
+from metering.api import app
 from metering.rollup import recompute_hour
 
 client = TestClient(app)

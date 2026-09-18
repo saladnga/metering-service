@@ -1,11 +1,13 @@
-from fastapi import FastAPI
+from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 from uuid import UUID
+
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
+
 from metering.db import pool
 from metering.ingest import insert_events
-from datetime import datetime
-from typing import Literal
 
 app = FastAPI()
 
@@ -17,10 +19,9 @@ def healthz():
 
 @app.get("/readyz")
 def readyz():
-    with pool.connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1")
-            cur.fetchone()
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1")
+        cur.fetchone()
     return {"status": "ready"}
 
 
@@ -73,8 +74,7 @@ def get_usage(
     if as_of:
         params.append(as_of)
 
-    with pool.connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, params)
-            total = cur.fetchone()[0]
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(query, params)
+        total = cur.fetchone()[0]
     return {"tenant": tenant, "metric": metric, "total": total}

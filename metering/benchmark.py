@@ -30,7 +30,7 @@ def main():
     end = datetime.datetime(2026, 6, 2, tzinfo=datetime.timezone.utc)
 
     print(f"Generating 50,000 events for {TENANT}/{METRIC}...")
-    on_time, late = generate_events(50000, start, end, tenant=TENANT, metric=METRIC)
+    on_time, _late = generate_events(50000, start, end, tenant=TENANT, metric=METRIC)
 
     # 1. Ingestion throughput
     total_accepted, total_duplicates = 0, 0

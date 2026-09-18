@@ -1,6 +1,7 @@
-from metering.db import pool
-import datetime
 import argparse
+import datetime
+
+from metering.db import pool
 
 
 def recompute_hour(tenant, metric, hour_start):
@@ -106,13 +107,12 @@ def reconcile(tenant, metric, day_start):
         LIMIT 1
     """
 
-    with pool.connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(from_source_query, (tenant, metric, day_start, day_end))
-            from_source = cur.fetchone()[0]
-            cur.execute(stored_query, (tenant, metric, day_start))
-            row = cur.fetchone()
-            stored = row[0] if row else 0
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(from_source_query, (tenant, metric, day_start, day_end))
+        from_source = cur.fetchone()[0]
+        cur.execute(stored_query, (tenant, metric, day_start))
+        row = cur.fetchone()
+        stored = row[0] if row else 0
 
     if from_source != stored:
         print(
