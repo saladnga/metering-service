@@ -56,27 +56,11 @@ This repo implements the third option, and the design follows directly from it: 
 
 ## Architecture
 
-```
-   clients                                                    consumers
-      │                                                            ▲
-      │ POST /v1/events                                           │ GET /v1/usage
-      ▼                                                            │
-┌─────────────┐        ┌───────────────────┐        ┌──────────────────────┐
-│   INGEST    │───────▶│     AGGREGATE      │───────▶│        SERVE          │
-│             │  raw   │                    │ small  │                       │
-│ events table│  rows  │ hourly/daily       │ totals │ revision-aware query, │
-│ (append-    │        │ rollups, always    │        │ ?as_of= audit lookup  │
-│  only, PK   │        │ recomputed from    │        │                       │
-│  dedup)     │        │ source, never      │        │                       │
-│             │        │ patched            │        │                       │
-└─────────────┘        └────────────────────┘        └──────────────────────┘
-                               ▲
-                               │ triggered by CLI (--hour / --backfill),
-                               │ scheduled via cron/systemd with a 2-hour
-                               │ grace window before closing a bucket
-```
+<img src="architecture.png" alt="Architecture diagram: clients POST events to the ingest stage (append-only events table with primary-key dedup), which feeds the aggregate stage (hourly/daily rollups, always recomputed from source, never patched), which serves consumers via a revision-aware query API with as_of audit lookups. Rollups are triggered by the CLI (--hour / --backfill), intended to run on a schedule with a caller-chosen grace window." width="900" height="530">
 
-## Stack: FastAPI + Postgres, Alembic migrations, Docker Compose locally, Terraform + EC2 on AWS, GitHub Actions for CI/CD
+## Stack
+
+FastAPI + Postgres, Alembic migrations, Docker Compose locally, Terraform + EC2 on AWS, GitHub Actions for CI/CD
 
 ## API
 
@@ -95,7 +79,7 @@ python -m metering.rollup --backfill 2026-08-01..2026-08-31 --tenant acme --metr
 python -m metering.rollup --reconcile 2026-08-15 --tenant acme --metric tokens_output
 ```
 
-The grace window isn't code — it's a calling convention: a scheduled job always asks for `now - 2 hours`, giving stragglers time to land before a bucket is first computed.
+The grace window isn't code — nothing enforces a specific delay. It's purely a calling convention: whatever schedules this (cron, systemd) chooses how far behind `now` to stay before first computing a bucket, trading completeness against freshness. No cron/systemd config is included in this repo; scheduling is left to the deployer.
 
 ## Benchmarks
 
